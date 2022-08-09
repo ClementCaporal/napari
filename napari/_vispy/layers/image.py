@@ -85,6 +85,9 @@ class VispyImageLayer(VispyBaseLayer):
             self._on_plane_thickness_change
         )
         self.layer.plane.events.normal.connect(self._on_plane_normal_change)
+        self.layer.events.multiclass_colormap.connect(
+            self._on_multiclass_colormap_change
+        )
 
         # display_change is special (like data_change) because it requires a self.reset()
         # this means that we have to call it manually. Also, it must be called before reset
@@ -121,6 +124,10 @@ class VispyImageLayer(VispyBaseLayer):
             return
 
         self._set_node_data(self.node, self.layer._data_view)
+
+    def _on_multiclass_colormap_change(self):
+        # do stuff
+        pass
 
     def _set_node_data(self, node, data):
         """Our self.layer._data_view has been updated, update our node."""
