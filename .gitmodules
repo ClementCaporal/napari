@@ -1,0 +1,3 @@
+[submodule "vispy-multivol"]
+	path = vispy-multivol
+	url = git@github.com:ClementCaporal/vispy-multivol.git
