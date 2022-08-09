@@ -7,6 +7,7 @@ from vispy.scene.node import Node
 from ...utils.translations import trans
 from ..utils.gl import fix_data_dtype, get_gl_extensions
 from ..visuals.image import Image as ImageNode
+from ..visuals.multiclass_volume import Volume as MultiClassVolume
 from ..visuals.volume import Volume as VolumeNode
 from .base import VispyBaseLayer
 
@@ -33,6 +34,11 @@ class ImageLayerNode:
             clim=[0, 1],
             texture_format=texture_format,
         )
+        self._multiclass_volume_code = MultiClassVolume(
+            np.zeros((1, 1, 1), dtype=np.float32),
+            clim=[0, 1],
+            texture_format=texture_format,
+        )
 
     def get_node(self, ndisplay: int) -> Node:
 
@@ -43,7 +49,7 @@ class ImageLayerNode:
         # Return Image or Volume node based on 2D or 3D.
         if ndisplay == 2:
             return self._image_node
-        return self._volume_node
+        return self._multiclass_volume_code
 
 
 class VispyImageLayer(VispyBaseLayer):
