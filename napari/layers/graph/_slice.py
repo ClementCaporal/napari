@@ -144,7 +144,7 @@ class _GraphSliceRequest:
         valid_nodes = self.data.initialized_buffer_mask()
         ixgrid = np.ix_(valid_nodes, not_disp)
         data = self.data.coords_buffer[ixgrid]
-        sizes = self.size[valid_nodes, np.newaxis] / 2
+        sizes = self.size / 2
         dist_from_low = np.abs(data - low)
         dist_from_high = np.abs(data - high)
         # keep distance of the closest margin

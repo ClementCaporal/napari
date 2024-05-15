@@ -351,7 +351,7 @@ class Graph(_BasePoints):
 
     @property
     def _points_data(self) -> np.ndarray:
-        return self._data.coords_buffer
+        return self._data.get_coordinates()
 
     @property
     def data(self) -> BaseGraph:
@@ -364,7 +364,7 @@ class Graph(_BasePoints):
         return _BasePoints.data.fset(self, data)
 
     def _set_data(self, data: Union[BaseGraph, ArrayLike, None]) -> None:
-        prev_size = self.data.n_allocated_nodes
+        prev_size = self.data.n_nodes
         self._data = self._fix_data(data)
         self._data_changed(prev_size)
 
@@ -422,9 +422,9 @@ class Graph(_BasePoints):
             vertex_indices=((),),
         )
 
-        prev_size = self.data.n_allocated_nodes
+        prev_size = self.data.n_nodes
         added_indices = self.data.add_nodes(indices=indices, coords=coords)
-        self._data_changed(prev_size)
+        self._data_changed(prev_size) # here ?
 
         self.events.data(
             value=self.data,
@@ -480,7 +480,7 @@ class Graph(_BasePoints):
             vertex_indices=((),),
         )
 
-        prev_size = self.data.n_allocated_nodes
+        prev_size = self.data.n_nodes
 
         # it got error missing __iter__ attribute, but we guarantee by np.atleast_1d call
         for idx in indices:  # type: ignore[union-attr]
@@ -569,7 +569,7 @@ class Graph(_BasePoints):
                         setattr(self, attribute, values)
 
     def _data_changed(self, prev_size: int) -> None:
-        self._update_props_and_style(self.data.n_allocated_nodes, prev_size)
+        self._update_props_and_style(self.data.n_nodes, prev_size)
         self._update_dims()
 
     def _get_state(self) -> Dict[str, Any]:
