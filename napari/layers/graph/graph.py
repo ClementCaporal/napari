@@ -424,7 +424,7 @@ class Graph(_BasePoints):
 
         prev_size = self.data.n_nodes
         added_indices = self.data.add_nodes(indices=indices, coords=coords)
-        self._data_changed(prev_size) # here ?
+        self._data_changed(prev_size)
 
         self.events.data(
             value=self.data,
