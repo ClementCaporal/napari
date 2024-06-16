@@ -512,6 +512,17 @@ class Graph(_BasePoints):
         shift : np.ndarray
             Selected coordinates shift
         """
+        selection_indices, disp_indices = ixgrid
+
+        node_buffer_indices = self.data.get_nodes()
+
+        # TO-DO: Find a more efficient way transform node indices to buffer indices
+        selection_buffer_indices = []
+        for idx in selection_indices:
+            selection_buffer_indices.append([node_buffer_indices[idx]])
+        selection_buffer_indices = node_buffer_indices[selection_indices]
+        ixgrid = tuple([selection_buffer_indices, disp_indices])
+
         self.data.coords_buffer[ixgrid] = (
             self.data.coords_buffer[ixgrid] + shift
         )
