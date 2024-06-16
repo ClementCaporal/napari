@@ -439,7 +439,7 @@ class Graph(_BasePoints):
     def remove_selected(self) -> None:
         """Removes selected points if any."""
         if len(self.selected_data):
-            self._remove_nodes(list(self.selected_data), is_buffer_domain=True)
+            self._remove_nodes(list(self.selected_data), is_buffer_domain=False)
             self.selected_data = cast(Selection[int], set())
 
     def remove(self, indices: ArrayLike) -> None:
@@ -467,15 +467,18 @@ class Graph(_BasePoints):
                     ndim=indices.ndim,
                 )
             )
-        # TODO: should know nothing about buffer
-        world_indices = (
-            self.data._buffer2world[indices] if is_buffer_domain else indices
-        )
+
+        if not is_buffer_domain:
+            node_buffer_indices = self.data.get_nodes()
+            selection_buffer_indices = node_buffer_indices[indices]
+        else:
+            selection_buffer_indices = indices.copy()
+
         self.events.data(
             value=self.data,
             action=ActionType.REMOVING,
             data_indices=tuple(
-                world_indices,
+                indices,
             ),
             vertex_indices=((),),
         )
@@ -483,7 +486,7 @@ class Graph(_BasePoints):
         prev_size = self.data.n_nodes
 
         # it got error missing __iter__ attribute, but we guarantee by np.atleast_1d call
-        for idx in indices:  # type: ignore[union-attr]
+        for idx in selection_buffer_indices:  # type: ignore[union-attr]
             self.data.remove_node(idx, is_buffer_domain)
 
         self._data_changed(prev_size)
@@ -492,7 +495,7 @@ class Graph(_BasePoints):
             value=self.data,
             action=ActionType.REMOVED,
             data_indices=tuple(
-                world_indices,
+                indices,
             ),
             vertex_indices=((),),
         )
