@@ -4,7 +4,7 @@ from typing import Any, Tuple
 
 import numpy as np
 from napari_graph import BaseGraph
-from numpy.typing import ArrayLike
+from numpy.typing import ArrayLike, NDArray
 
 from napari.layers.base._slice import _next_request_id
 from napari.layers.points._points_constants import PointsProjectionMode
@@ -82,16 +82,37 @@ class _GraphSliceRequest:
         if not not_disp:
             # If we want to display everything, then use all indices.
             # scale is only impacted by not displayed data, therefore 1
-            node_indices = np.arange(self.data.n_allocated_nodes)
-            node_indices = node_indices[self.data.initialized_buffer_mask()]
-            _, edges = self.data.get_edges_buffers(is_buffer_domain=True)
+            node_buffer_indices = self.data.get_nodes()
+            node_indices = np.arange(len(node_buffer_indices))
+            nodes_mask = node_buffer_indices[node_indices]
+
+            edge_indices = self.data.subgraph_edges(
+                nodes_mask, is_buffer_domain=True
+                )
+
             return _GraphSliceResponse(
                 indices=node_indices,
-                edges_indices=edges,
+                edges_indices=edge_indices,
                 scale=1,
                 slice_input=self.slice_input,
                 request_id=self.id,
             )
+
+        node_indices, edges_indices, scale = self._get_slice_data(not_disp)
+
+
+        return _GraphSliceResponse(
+            indices=node_indices,
+            edges_indices=edges_indices,
+            scale=scale,
+            slice_input=self.slice_input,
+            request_id=self.id,
+            )
+
+    def _get_slice_data(self, not_disp: list[int]) -> Tuple[np.ndarray, np.ndarray, ArrayLike]:
+        data = self.data.get_coordinates()[:, not_disp]
+        node_buffer_indices = self.data.get_nodes()
+        scale = 1
 
         point, m_left, m_right = self.data_slice[not_disp].as_array()
 
@@ -108,77 +129,33 @@ class _GraphSliceRequest:
         low[too_thin_slice] -= 0.5
         high[too_thin_slice] += 0.5
 
-        in_slice, node_indices, edges_indices, scale = self._get_slice_data(
-            not_disp, low, high
-        )
+        inside_slice = np.all((data >= low) & (data <= high), axis=1)
+        slice_indices = np.where(inside_slice)[0].astype(int)
+
 
         if self.out_of_slice_display and self.slice_input.ndim > 2:
-            (
-                node_indices,
-                edges_indices,
-                scale,
-            ) = self._get_out_of_display_slice_data(
-                not_disp, low, high, in_slice
-            )
+            sizes = self.size[:, np.newaxis] / 2
 
-        return _GraphSliceResponse(
-            indices=node_indices,
-            edges_indices=edges_indices,
-            scale=scale,
-            slice_input=self.slice_input,
-            request_id=self.id,
-        )
+            # add out of slice points with progressively lower sizes
+            dist_from_low = np.abs(data - low)
+            dist_from_high = np.abs(data - high)
+            distances = np.minimum(dist_from_low, dist_from_high)
+            # anything inside the slice is at distance 0
+            distances[inside_slice] = 0
 
-    def _get_out_of_display_slice_data(
-        self,
-        not_disp: Sequence[int],
-        low: np.ndarray,
-        high: np.ndarray,
-        in_slice: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, ArrayLike]:
-        """
-        Slices data according to non displayed indices
-        and compute scaling factor for out-slice display
-        while ignoring not initialized nodes from graph.
-        """
-        valid_nodes = self.data.initialized_buffer_mask()
-        ixgrid = np.ix_(valid_nodes, not_disp)
-        data = self.data.coords_buffer[ixgrid]
-        sizes = self.size / 2
-        dist_from_low = np.abs(data - low)
-        dist_from_high = np.abs(data - high)
-        # keep distance of the closest margin
-        distances = np.minimum(dist_from_low, dist_from_high)
-        distances[in_slice] = 0
-        matches = np.all(distances <= sizes, axis=1)
-        if not np.any(matches):
-            return np.empty(0, dtype=int), np.empty(0, dtype=int), 1
-        size_match = sizes[matches]
-        scale_per_dim = (size_match - distances[matches]) / size_match
-        scale = np.prod(scale_per_dim, axis=1)
-        valid_nodes[valid_nodes] = matches
-        slice_indices = np.where(valid_nodes)[0].astype(int)
+            # display points that "spill" into the slice
+            matches = np.all(distances <= sizes, axis=1)
+            if not np.any(matches):
+                return np.empty(0, dtype=int), np.empty(0, dtype=int), 1
+            size_match = sizes[matches]
+            # rescale size of spilling points based on how much they do
+            scale_per_dim = (size_match - distances[matches]) / size_match
+            scale = np.prod(scale_per_dim, axis=1)
+            slice_indices = np.where(matches)[0].astype(int)
+
+        nodes_mask = node_buffer_indices[slice_indices]
         edge_indices = self.data.subgraph_edges(
-            slice_indices, is_buffer_domain=True
+            nodes_mask, is_buffer_domain=True
         )
+
         return slice_indices, edge_indices, scale
-
-    def _get_slice_data(
-        self,
-        not_disp: ArrayLike,
-        low: np.ndarray,
-        high: np.ndarray,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, ArrayLike]:
-        """
-        Slices data according to displayed indices
-        while ignoring not initialized nodes from graph.
-        """
-        valid_nodes = self.data.initialized_buffer_mask()
-        data = self.data.coords_buffer[np.ix_(valid_nodes, not_disp)]
-        matches = np.all((data >= low) & (data <= high), axis=1)
-        valid_nodes[valid_nodes] = matches
-        slice_indices = np.where(valid_nodes)[0].astype(int)
-        edge_indices = self.data.subgraph_edges(
-            slice_indices, is_buffer_domain=True
-        )
-        return matches, slice_indices, edge_indices, 1
