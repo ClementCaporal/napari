@@ -87,7 +87,7 @@ class _GraphSliceRequest:
             nodes_mask = node_buffer_indices[node_indices]
 
             edge_indices = self.data.subgraph_edges(
-                nodes_mask, is_buffer_domain=True
+                nodes_mask, is_buffer_domain=False
                 )
 
             return _GraphSliceResponse(

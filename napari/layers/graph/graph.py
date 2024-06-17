@@ -423,18 +423,20 @@ class Graph(_BasePoints):
         )
 
         prev_size = self.data.n_nodes
-        added_indices = self.data.add_nodes(indices=indices, coords=coords)
+        added_buffer_indices = self.data.add_nodes(indices=indices, coords=coords)
         self._data_changed(prev_size)
+
+        added_indices = self.data._map_world2buffer(added_buffer_indices)
 
         self.events.data(
             value=self.data,
             action=ActionType.ADDED,
             data_indices=tuple(
-                added_indices,
+                added_buffer_indices,
             ),
             vertex_indices=((),),
         )
-        self.selected_data = self.data._map_world2buffer(added_indices)
+        self.selected_data = added_indices
 
     def remove_selected(self) -> None:
         """Removes selected points if any."""
@@ -444,7 +446,7 @@ class Graph(_BasePoints):
 
     def remove(self, indices: ArrayLike) -> None:
         """Remove nodes given indices."""
-        self._remove_nodes(indices, is_buffer_domain=False)
+        self._remove_nodes(indices, is_buffer_domain=True)
 
     def _remove_nodes(
         self,
@@ -478,7 +480,7 @@ class Graph(_BasePoints):
             value=self.data,
             action=ActionType.REMOVING,
             data_indices=tuple(
-                indices,
+                selection_buffer_indices,
             ),
             vertex_indices=((),),
         )
@@ -487,7 +489,7 @@ class Graph(_BasePoints):
 
         # it got error missing __iter__ attribute, but we guarantee by np.atleast_1d call
         for idx in selection_buffer_indices:  # type: ignore[union-attr]
-            self.data.remove_node(idx, is_buffer_domain)
+            self.data.remove_node(idx, False)
 
         self._data_changed(prev_size)
 
@@ -495,7 +497,7 @@ class Graph(_BasePoints):
             value=self.data,
             action=ActionType.REMOVED,
             data_indices=tuple(
-                indices,
+                selection_buffer_indices,
             ),
             vertex_indices=((),),
         )
