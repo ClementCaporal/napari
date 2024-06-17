@@ -169,7 +169,7 @@ def test_remove_selected_nodes(graph_class: Type[BaseGraph]) -> None:
     assert np.all(graph.get_coordinates() == 1)
 
     # remove last nodes, note that node id is not zero
-    layer.selected_data = {1}
+    layer.selected_data = {0}
     layer.remove_selected()
     assert len(layer.data) == 0
     assert graph.n_nodes == 0
@@ -351,7 +351,8 @@ def test_remove_selected_data_event(graph_class):
     assert second_call[1]['action'] == ActionType.REMOVED
     assert second_call[1]['data_indices'] == (0,)
 
-    layer.selected_data = {1, 2}
+    # make sure data indices are updated according to removals
+    layer.selected_data = {0, 1}
     layer.remove_selected()
     last_call = calls[-1]
     assert last_call[1]['data_indices'] == (1, 2)
