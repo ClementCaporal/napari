@@ -35,8 +35,14 @@ class _Graph(Layer):
         self._data = data
 
     def _get_ndim(self) -> int:
-        inferred_ndim: int | None = self._get_graph_ndim(self._data)
-        return inferred_ndim if inferred_ndim is not None else self._ndim
+        nodes = self.data.nodes(data=True)
+        first_node = next(iter(nodes), None)
+
+        return (
+            self._ndim
+            if first_node is None
+            else len(first_node[1]['coordinates'])
+        )
 
     @staticmethod
     def _get_graph_ndim(graph: Graph) -> int | None:
