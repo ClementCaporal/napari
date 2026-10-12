@@ -42,9 +42,12 @@ class _Graph(Layer):
     def _get_graph_ndim(graph: Graph) -> int | None:
         nodes = list(graph.nodes(data=True))
 
-        if nodes and not all(
-            'coordinates' in node_attr for _, node_attr in nodes
-        ):
-            raise ValueError('All nodes need to have coordinates')
+        if nodes:
+            if not all('coordinates' in node_attr for _, node_attr in nodes):
+                raise ValueError('All nodes need to have coordinates')
+            if len({len(node[1]['coordinates']) for node in nodes}) != 1:
+                raise ValueError(
+                    'All node coordinates need to have the same ndim'
+                )
 
         return len(nodes[0][1]['coordinates']) if nodes else None
