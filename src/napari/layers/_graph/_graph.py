@@ -3,6 +3,8 @@ import numpy as np
 from networkx import Graph
 from napari.layers.base import Layer
 
+from napari.layers._graph._slice import _GraphSlicingState
+
 
 class _Graph(Layer):
     _data: Graph
@@ -74,6 +76,9 @@ class _Graph(Layer):
                 )
 
         return len(nodes[0][1]['coordinates']) if nodes else None
+
+    def _get_layer_slicing_state(self, data, cache) -> _GraphSlicingState:
+        return _GraphSlicingState(self, data, cache)
 
         # def _get_layer_slicing_state(
 
