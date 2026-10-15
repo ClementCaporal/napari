@@ -80,6 +80,11 @@ class _Graph(Layer):
     def _get_layer_slicing_state(self, data, cache) -> _GraphSlicingState:
         return _GraphSlicingState(self, data, cache)
 
+    def _get_state(self) -> dict:
+        state = self._get_base_state()
+        state.update({'data': self.data, 'ndim': self.ndim})
+        return state
+
         # def _get_layer_slicing_state(
 
     #     self, data: LayerDataType, cache: bool
