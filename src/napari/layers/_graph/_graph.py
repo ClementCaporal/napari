@@ -85,8 +85,13 @@ class _Graph(Layer):
         state.update({'data': self.data, 'ndim': self.ndim})
         return state
 
-        # def _get_layer_slicing_state(
+    def _set_view_slice(self) -> None:
+        pass
 
-    #     self, data: LayerDataType, cache: bool
-    # ) -> _PointsSlicingState:
-    #     return _PointsSlicingState(layer=self, data=data, cache=cache)
+    def _update_thumbnail(self) -> None:
+        thumbnail = np.zeros(self._thumbnail_shape)
+        thumbnail[..., 3] = self.opacity
+        self.thumbnail = thumbnail
+
+    def _get_value(self, position):
+        return None
