@@ -46,6 +46,8 @@ def _slice_graph(
     low = point - margin_left
     high = point + margin_right
 
+    # I decided to do the zero width just like points do,
+    # and render -0.5 and 0.5 down and up respectively
     zero_width = np.isclose(low, high)
     low[zero_width] -= 0.5
     high[zero_width] += 0.5
