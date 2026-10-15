@@ -1,3 +1,5 @@
+import numpy as np
+
 from networkx import Graph
 from napari.layers.base import Layer
 
@@ -44,6 +46,21 @@ class _Graph(Layer):
             else len(first_node[1]['coordinates'])
         )
 
+    @property
+    def _extent_data(self) -> np.ndarray:
+        if not self.data.nodes:
+            return np.full((2, self.ndim), np.nan)
+        coordinates = np.asarray(
+            [
+                node_attr['coordinates']
+                for _, node_attr in self.data.nodes(data=True)
+            ]
+        )
+        min_coords = np.min(coordinates, axis=0)
+        max_coords = np.max(coordinates, axis=0)
+
+        return np.vstack([min_coords, max_coords])
+
     @staticmethod
     def _get_graph_ndim(graph: Graph) -> int | None:
         nodes = list(graph.nodes(data=True))
@@ -57,3 +74,9 @@ class _Graph(Layer):
                 )
 
         return len(nodes[0][1]['coordinates']) if nodes else None
+
+        # def _get_layer_slicing_state(
+
+    #     self, data: LayerDataType, cache: bool
+    # ) -> _PointsSlicingState:
+    #     return _PointsSlicingState(layer=self, data=data, cache=cache)
