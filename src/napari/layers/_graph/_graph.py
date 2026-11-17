@@ -29,8 +29,8 @@ class _Graph(Layer):
     blending : str
         One of a list of preset blending modes that determines how RGB and
         alpha values of the layer visual get mixed. Allowed values are
-        {'opaque', 'translucent', 'translucent_no_depth', 'additive', and 'minimum'}.
-    cache : bool
+        {'opaque', 'translucent', 'translucent_no_depth', 'additive', 'minimum',
+        and 'multiplicative'}.
         Whether slices of out-of-core datasets should be cached upon retrieval.
         Currently, this only applies to dask arrays.
     experimental_clipping_planes : list of dicts, list of ClippingPlane, or ClippingPlaneList
@@ -121,6 +121,7 @@ class _Graph(Layer):
     @data.setter
     def data(self, data: nxGraph) -> None:
         self._data = data
+        self._update_dims()
 
     def _get_ndim(self) -> int:
         nodes = self.data.nodes(data=True)
