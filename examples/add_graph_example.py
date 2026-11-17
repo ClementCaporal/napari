@@ -1,8 +1,10 @@
 """
-Add graph 3D
-============
+Add nD Graph
+===================
 
-Display a graph layer in 3D using the ``add_graph`` API.
+Display a time-varying Möbius strip as a graph in napari. Each node is a point on a Möbius
+strip, and edges connect neighbouring points. Over time the strip's
+twist travels around the loop, giving a looping animation.
 
 .. tags:: visualization-nD
 """
@@ -12,27 +14,60 @@ import numpy as np
 
 import napari
 
-n_nodes = 100  # nodes per strand
-angles = np.linspace(0, 3 * np.pi, n_nodes)  # three turns
-z = np.linspace(0, 100, n_nodes)
-radius = np.linspace(5, 10, n_nodes)  # narrow bottom, wide top
+n_u = 60       # nodes along the loop
+n_v = 5        # nodes across the strip width
+n_t = 48       # number of time frames
+radius = 15    # radius of the loop
+width = 20     # width of the strip
 
-# Two strands in opposite phase, each node has (z, y, x) coordinates
-first_strand_pos = np.column_stack([z, radius * np.sin(angles), radius * np.cos(angles)])
-second_strand_pos = np.column_stack([z, radius * np.sin(angles + np.pi), radius * np.cos(angles + np.pi)])
-strands_pos = [first_strand_pos, second_strand_pos]
+u = np.linspace(0, 2 * np.pi, n_u, endpoint=False)  # position along the loop
+v = np.linspace(-width / 2, width / 2, n_v)         # position across the strip
+U, V = np.meshgrid(u, v, indexing="ij")
 
+# Build the graph: each node must have a 'coordinates' attribute
 graph = nx.Graph()
-graph.add_nodes_from(
-    (i, {'coordinates': c}) for i, c in enumerate(np.concatenate(strands_pos))
-)
-graph.add_edges_from(nx.path_graph(n_nodes).edges)  # first strand
-graph.add_edges_from((i + n_nodes, j + n_nodes) for i, j in nx.path_graph(n_nodes).edges)  # second strand
-graph.add_edges_from((i, i + n_nodes) for i in range(0, n_nodes, 2))  # rungs
+nodes_per_frame = n_u * n_v
 
+for t in range(n_t):
+    # Half a turn of the strip along the loop makes it a Möbius strip;
+    # adding a time-dependent phase makes the twist travel around it.
+    angle = 0.5 * U + 2 * np.pi * t / n_t
+
+    X = (radius + V * np.cos(angle)) * np.cos(U)
+    Y = (radius + V * np.cos(angle)) * np.sin(U)
+    Z = V * np.sin(angle)
+
+    # napari coordinates are (t, z, y, x)
+    coords = np.column_stack([np.full(X.size, t), Z.ravel(), Y.ravel(), X.ravel()])
+
+    # Node ids of frame t are offset so that they are unique across frames
+    offset = t * nodes_per_frame
+    for k, coord in enumerate(coords):
+        graph.add_node(offset + k, coordinates=coord)
+
+    # Connect each node to its neighbours
+    for i in range(n_u):
+        for j in range(n_v):
+            node = offset + i * n_v + j
+
+            # Across the width
+            if j < n_v - 1:
+                graph.add_edge(node, node + 1)
+
+            # Along the loop
+            if i < n_u - 1:
+                graph.add_edge(node, node + n_v)
+            else:
+                # Closing the loop: the half twist flips the strip,
+                # so the last row connects to the first row mirrored.
+                graph.add_edge(node, offset + (n_v - 1 - j))
+
+# add the graph to napari and set up the viewer
 viewer = napari.Viewer(ndisplay=3)
 viewer._add_graph(graph)
+viewer.dims.axis_labels = ("t", "z", "y", "x")
+viewer.scene.overlays.coordinate_grid.visible = True
+viewer.scene.camera.angles = (-30, 0, -70)
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     napari.run()
