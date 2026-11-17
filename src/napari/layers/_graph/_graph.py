@@ -16,7 +16,7 @@ class _Graph(Layer):
         Each node in the graph must have a 'coordinates' attribute as an array of length D dimensions.
     ndim : int
         Number of dimensions for graph. When data is not None, ndim must be D.
-        An empty points layer can be instantiated with arbitrary ndim.
+        An empty graph layer can be instantiated with arbitrary ndim.
     affine : n-D array or napari.utils.transforms.Affine
         (N+1, N+1) affine transformation matrix in homogeneous coordinates.
         The first (N, N) entries correspond to a linear transform and
@@ -29,8 +29,8 @@ class _Graph(Layer):
     blending : str
         One of a list of preset blending modes that determines how RGB and
         alpha values of the layer visual get mixed. Allowed values are
-        {'opaque', 'translucent', 'translucent_no_depth', 'additive', 'minimum',
-        and 'multiplicative'}.
+        {'opaque', 'translucent', 'translucent_no_depth', 'additive', and 'minimum'}.
+    cache : bool
         Whether slices of out-of-core datasets should be cached upon retrieval.
         Currently, this only applies to dask arrays.
     experimental_clipping_planes : list of dicts, list of ClippingPlane, or ClippingPlaneList
