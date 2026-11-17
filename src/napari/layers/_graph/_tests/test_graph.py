@@ -70,14 +70,52 @@ def test_4D_graph():
     assert layer.ndim == 4
 
 
+def test_changing_graph():
+    """Test changing Graph data."""
+    shape_a = (10, 2)
+    shape_b = (20, 2)
+    np.random.seed(0)
+    graph_a = nxGraph()
+    graph_a.add_nodes_from(
+        [(i, {'coordinates': np.random.rand(2)}) for i in range(shape_a[0])]
+    )
+    graph_b = nxGraph()
+    graph_b.add_nodes_from(
+        [(i, {'coordinates': np.random.rand(2)}) for i in range(shape_b[0])]
+    )
+
+    layer = _Graph(graph_a)
+    layer.data = graph_b
+    assert np.array_equal(layer.data, graph_b)
+    assert layer.ndim == shape_b[1]
+    assert layer._slicing_state._view.node_coordinates.shape == shape_b
+
+
+def test_name():
+    """Test setting layer name."""
+    np.random.seed(0)
+    graph = nxGraph()
+    layer = _Graph(graph)
+    assert layer.name == '_Graph'
+
+    layer = _Graph(graph, name='random')
+    assert layer.name == 'random'
+
+    layer.name = 'Graphs'
+    assert layer.name == 'Graphs'
+
+
 def test_visibility():
     """Test setting layer visibility."""
+    np.random.seed(0)
     graph = nxGraph()
-
-    layer = _Graph(data=graph)
+    layer = _Graph(graph)
     assert layer.visible is True
 
     layer.visible = False
+    assert layer.visible is False
+
+    layer = _Graph(graph, visible=False)
     assert layer.visible is False
 
     layer.visible = True
@@ -88,10 +126,10 @@ def test_opacity():
     """Test setting layer opacity."""
     graph = nxGraph()
 
-    layer = _Graph(data=graph)
+    layer = _Graph(graph)
     assert layer.opacity == 1.0
 
-    layer.opacity = 0.5
+    layer = _Graph(graph, opacity=0.5)
     assert layer.opacity == 0.5
 
     layer.opacity = 0.75
@@ -102,10 +140,10 @@ def test_blending():
     """Test setting layer blending mode."""
     graph = nxGraph()
 
-    layer = _Graph(data=graph)
+    layer = _Graph(graph)
     assert layer.blending == 'translucent'
 
-    layer.blending = 'additive'
+    layer = _Graph(graph, blending='additive')
     assert layer.blending == 'additive'
 
     layer.blending = 'opaque'
