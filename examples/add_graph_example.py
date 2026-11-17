@@ -62,9 +62,10 @@ for t in range(n_t):
                 # so the last row connects to the first row mirrored.
                 graph.add_edge(node, offset + (n_v - 1 - j))
 
-# add the graph to napari and set up the viewer
+# add the graph to napari
 viewer = napari.Viewer(ndisplay=3)
-viewer._add_graph(graph)
+viewer._add_graph(graph, name="Möbius strip")
+
 viewer.dims.axis_labels = ("t", "z", "y", "x")
 viewer.scene.overlays.coordinate_grid.visible = True
 viewer.scene.camera.angles = (-30, 0, -70)
