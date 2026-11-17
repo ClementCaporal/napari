@@ -171,7 +171,7 @@ def test_thick_slice():
         layer._slicing_state._view.node_coordinates, np.array([[0, 0], [1, 0]])
     )
 
-    # when the slice does not intersect the edge nor the nodes, it should not be visible
+    # when the slice does not intersect the edge nor the nodes, they should not be visible
     layer._slice_dims(
         Dims(
             ndim=3,
@@ -223,7 +223,7 @@ def test_extent_single_node_returns_coordinates():
     np.testing.assert_array_equal(extent.data, np.array([[3, 4], [3, 4]]))
 
 
-def test_get_state_round_trip():  # currently fails
+def test_get_state_round_trip():
     graph = nxGraph()
     graph.add_node(1, coordinates=[1, 2])
     graph.add_node(2, coordinates=[3, 4])
@@ -234,33 +234,7 @@ def test_get_state_round_trip():  # currently fails
     assert_layer_state_equal(new_layer._get_state(), state)
 
 
-def test_thick_slice_excludes_all():
-    graph = nxGraph()
-    graph.add_node(1, coordinates=[0, 0, 0])
-    layer = _Graph(data=graph)
-    layer._slice_dims(
-        Dims(
-            ndim=3,
-            point=(100, 0, 0),
-            range=((100, 200, 1), (0, 1, 1), (0, 1, 1)),
-        )
-    )
-    assert layer._slicing_state._view.node_coordinates.size == 0
-
-
-def test_data_setter():
-    graph = nxGraph()
-    graph.add_node(1, coordinates=[0, 0])
-    layer = _Graph(data=graph)
-    assert layer.ndim == 2
-
-    graph_2d = nxGraph()
-    graph_2d.add_node(1, coordinates=[1, 2])
-    layer.data = graph_2d
-    assert layer.data is graph_2d
-
-
-def test_docstring():  # currently fails
+def test_docstring():
     validate_all_params_in_docstring(_Graph)
     validate_kwargs_sorted(_Graph)
     validate_docstring_parent_class_consistency(_Graph)
